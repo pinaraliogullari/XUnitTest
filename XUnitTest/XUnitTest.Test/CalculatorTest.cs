@@ -1,30 +1,38 @@
-﻿using Xunit;
+﻿using Moq;
+using Xunit;
 using XUnitTest.App;
 
 namespace XUnitTest.Test
 {
 	public class CalculatorTest
 	{
-
+		
 		public Calculator Calculator { get; set; }
-        public CalculatorTest()
-        {
-            this.Calculator = new Calculator();
-        }
+        public Mock<ICalculatorService> calculatorServiceMock { get; set; }
+
+		public CalculatorTest()
+		{
+			this.calculatorServiceMock = new Mock<ICalculatorService>();
+			this.Calculator = new Calculator(calculatorServiceMock.Object);
+		}
 
 
-        //parametre almayan test metotlarında[Fact] attribute u kullanılır.
+		//parametre almayan test metotlarında[Fact] attribute u kullanılır.
 
-        [Fact]
+		[Fact]
 		public void AddTest_ReturnTotalValue_WhenAandBIsDifferentValue()
 		{
 			//Arrange
 			int a = 10;
 			int b = 20;
+			int exceptedTotal = a +b;
+			
+
 			//Act
-			var total= Calculator.Add(a, b);
+			calculatorServiceMock.Setup(c => c.Add(a, b)).Returns(exceptedTotal);
+			int actualTotal =Calculator.Add(a, b);
 			//Assert
-			Assert.Equal<int>(30, total);
+			Assert.Equal<int>(exceptedTotal, actualTotal);
 		}
 
 		[Fact]
@@ -48,6 +56,25 @@ namespace XUnitTest.Test
 		{
 			var actualTotal= Calculator.Add(a, b);
 			Assert.Equal(expectedTotal, actualTotal);
+		}
+
+		[Theory]
+		[InlineData(1, 5,5)]
+
+		public void Multip_ReturnMultipleValue_WhenAIsDifferentFromZero(int a, int b,int expectedValue)
+		{
+			calculatorServiceMock.Setup(x => x.Multip(a, b)).Returns(expectedValue);
+			Assert.Equal(expectedValue, 5);
+		}
+
+		[Theory]
+		[InlineData(0, 5)]
+
+		public void Multip_ReturnExceptionMessage_WhenAIsZero(int a, int b)
+		{
+			calculatorServiceMock.Setup(x => x.Multip(a, b)).Throws(new Exception("a 0 olamaz"));
+			Exception ex = Assert.Throws<Exception>(() => Calculator.Multip(a, b));
+			Assert.Equal("a 0 olamaz", ex.Message);
 		}
 	}
 }
