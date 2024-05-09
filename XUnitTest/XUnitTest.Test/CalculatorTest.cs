@@ -63,8 +63,16 @@ namespace XUnitTest.Test
 
 		public void Multip_ReturnMultipleValue_WhenAIsDifferentFromZero(int a, int b,int expectedValue)
 		{
-			calculatorServiceMock.Setup(x => x.Multip(a, b)).Returns(expectedValue);
-			Assert.Equal(expectedValue, 5);
+			int actualMultip = 0;
+			calculatorServiceMock.Setup(x => x.Multip(It.IsAny<int>(), It.IsAny<int>())).Callback<int, int>((x, y) => actualMultip = x * y);
+			//inline datadan gelen değerler;
+			Calculator.Multip(a, b);
+			Assert.Equal(expectedValue, actualMultip);
+
+			//manuel girilen değerler
+			//inline datadan gelen değerler;
+			Calculator.Multip(8, 4);
+			Assert.Equal(32, actualMultip);
 		}
 
 		[Theory]
