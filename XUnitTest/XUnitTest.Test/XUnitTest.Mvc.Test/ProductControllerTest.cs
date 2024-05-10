@@ -34,7 +34,7 @@ namespace XUnitTest.Test.XUnitTest.Mvc.Test
 		}
 
 		[Fact]
-		public async Task Details_ReturnRedirectToAction_WhenIdIsNull()
+		public async Task Details_ReturnRedirectToIndexAction_WhenIdIsNull()
 		{
 			var mock= new Mock<IRepository<Product>>();
 			var controller = new ProductController(mock.Object);
@@ -72,6 +72,66 @@ namespace XUnitTest.Test.XUnitTest.Mvc.Test
 			var viewResult= Assert.IsType<ViewResult>(result);
 			var data=Assert.IsAssignableFrom<Product>(viewResult.Model);
 			Assert.Equal<Guid>(productId, data.Id);
+		}
+
+		[Fact]
+		public void Create_ReturnView_WhenActionExecute()
+		{
+			var mock= new Mock<IRepository<Product>>();
+			var controller=new ProductController(mock.Object);
+
+			var result=  controller.Create();
+			Assert.IsType<ViewResult>(result);
+		}
+
+		[Fact]
+		public async Task Create_ReturnView_WhenModelStateIsNotValid()
+		{
+			var mock = new Mock<IRepository<Product>>();
+			var controller = new ProductController(mock.Object);
+			controller.ModelState.AddModelError("name", "name alanı boş bırakılamaz");
+
+			var result= await controller.Create(new Product());
+			var viewResult= Assert.IsType<ViewResult>( result);
+			Assert.IsType<Product>(viewResult.Model);
+
+		}
+
+		[Fact]
+		public async Task Create_ReturnRedirectToIndexAction_WhenModelStateIsValid()
+		{
+			var mock= new Mock<IRepository<Product>>();
+			mock.Setup(x => x.CreateAsync(new Product()));
+			var controller=new ProductController(mock.Object);
+
+			var result= await controller.Create(new Product());
+			var redirect=Assert.IsType<RedirectToActionResult>(result);
+			Assert.Equal("Index", redirect.ActionName);
+		
+		}
+
+		[Fact]
+		public async Task Create_CreateMethodExecute_WhenModelStateIsValid()
+		{
+			Product product=new();
+			var mock = new Mock<IRepository<Product>>();
+			mock.Setup(x => x.CreateAsync(It.IsAny<Product>())).Callback<Product>(x => product=x);
+			var controller=new ProductController(mock.Object);
+			var result = await controller.Create(product);
+
+			mock.Verify(x=>x.CreateAsync(It.IsAny<Product>()), Times.Once());
+		}
+
+		[Fact]
+
+		public async Task Create_CreateMethodNotExecute_WhenModelStateIsNotValid()
+		{
+			var mock=new Mock<IRepository<Product>>();
+			var controller= new ProductController(mock.Object);
+			controller.ModelState.AddModelError("name", "Name alanı boş bırakılamaz");
+
+			var result=await controller.Create(It.IsAny<Product>());
+			mock.Verify(x => x.CreateAsync(It.IsAny<Product>()), Times.Never());
 		}
 	}
 }
