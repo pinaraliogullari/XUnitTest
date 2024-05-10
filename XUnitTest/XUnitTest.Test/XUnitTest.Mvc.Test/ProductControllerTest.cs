@@ -29,8 +29,49 @@ namespace XUnitTest.Test.XUnitTest.Mvc.Test
 
 			var result=await controller.Index();
 			var viewResult=Assert.IsType<ViewResult>(result);
-			var products=Assert.IsAssignableFrom<IEnumerable<Product>>(viewResult.Model);
-			Assert.Equal(1, products.Count());
+			var data=Assert.IsAssignableFrom<IEnumerable<Product>>(viewResult.Model);
+			Assert.Equal(1, data.Count());
+		}
+
+		[Fact]
+		public async Task Details_ReturnRedirectToAction_WhenIdIsNull()
+		{
+			var mock= new Mock<IRepository<Product>>();
+			var controller = new ProductController(mock.Object);
+
+			var result = await controller.Details(null);
+			var redirect=Assert.IsType<RedirectToActionResult>(result);
+			Assert.Equal("Index",redirect.ActionName);
+		}
+
+		[Fact]
+		public async Task Details_ReturnNotFound_WhenIdIsNotValid()
+		{
+			var productId=Guid.NewGuid();
+			Product product = null;
+
+			var mock= new Mock<IRepository<Product>>();
+			mock.Setup(x => x.GetByIdAsync(productId)).ReturnsAsync(product);
+			var controller = new ProductController(mock.Object);
+
+			var result= await controller.Details(productId);
+			var redirect=Assert.IsType<NotFoundResult>(result);
+			Assert.Equal<int>(404, redirect.StatusCode);
+		}
+
+		[Fact]
+		public async Task Details_ReturnProduct_WhenIdIsValid()
+		{
+			var productId=Guid.NewGuid();
+
+			var mock= new Mock<IRepository<Product>>();
+			mock.Setup(x => x.GetByIdAsync(productId)).ReturnsAsync(new Product() { Id=productId});
+			var controller= new ProductController(mock.Object);
+
+			var result= await controller.Details(productId);
+			var viewResult= Assert.IsType<ViewResult>(result);
+			var data=Assert.IsAssignableFrom<Product>(viewResult.Model);
+			Assert.Equal<Guid>(productId, data.Id);
 		}
 	}
 }
