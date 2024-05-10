@@ -25,6 +25,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\XUnitTest.App\XUnitTest.App.csproj" />
+    <ProjectReference Include="..\XUnitTest.Mvc\XUnitTest.Mvc.csproj" />
   </ItemGroup>
 
 </Project>
