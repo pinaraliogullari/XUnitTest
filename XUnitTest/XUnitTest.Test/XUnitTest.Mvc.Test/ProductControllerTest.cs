@@ -232,6 +232,71 @@ namespace XUnitTest.Test.XUnitTest.Mvc.Test
 			var result= controller.Edit(guidId,productId);
 			mock.Verify(x=>x.UpdateAsync(It.IsAny<Product>()),Times.Once());
 		}
+
+		[Fact]
+		public async Task Delete_ReturnNotFound_WhenIdIsNull()
+		{
+			var mock=new Mock<IRepository<Product>>();
+			var controller= new ProductController(mock.Object);
+
+			var result = await controller.Delete(null);
+			Assert.IsType<NotFoundResult>(result);
+		}
+
+		[Fact]
+		public async Task Delete_ReturnNotFound_WhenProductIsNull()
+		{
+			Product product = null;
+			var productId=Guid.NewGuid();
+
+			var mock= new Mock<IRepository<Product>>();
+			mock.Setup(x=>x.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(product);
+			var controller= new ProductController(mock.Object);
+
+			var result= await controller.Delete(productId);
+			 Assert.IsType<NotFoundResult>(result);
+		}
+
+		[Fact]
+		public async Task Delete_ReturnProduct_WhenActionExecute()
+		{
+			var productId = Guid.NewGuid();
+
+			var mock = new Mock<IRepository<Product>>();
+			mock.Setup(x => x.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(new Product() { Id= productId });
+			var controller= new ProductController(mock.Object);
+
+			var result=await controller.Delete(productId);
+			var viewResult=Assert.IsType<ViewResult>(result);
+			Assert.IsAssignableFrom<Product>(viewResult.Model);
+		}
+
+		[Fact]
+		public async Task DeleteConfirmed_ReturnRedirectToIndexAction_WhenActionExecute()
+		{
+			var productId = Guid.NewGuid();
+
+			var mock = new Mock<IRepository<Product>>();
+			var controller=new ProductController(mock.Object);
+
+			var result = await controller.DeleteConfirmed(productId);
+			Assert.IsType<RedirectToActionResult>(result);
+		}
+
+		[Fact]
+		public async Task DeleteConfirmed_DeleteMethodExecute_WhenActionExecute()
+		{
+			var productId = Guid.NewGuid();
+
+			var mock = new Mock<IRepository<Product>>();
+			mock.Setup(x => x.DeleteAsync(It.IsAny<Product>()));
+			var controller = new ProductController(mock.Object);
+
+			var result= await controller.DeleteConfirmed(productId);
+			var redirect=Assert.IsType<RedirectToActionResult>(result);
+			Assert.Equal("Index", redirect.ActionName);
+			mock.Verify(x=>x.DeleteAsync(It.IsAny<Product>()),Times.Once);
+		}
 	
 	}
 }
